@@ -1,0 +1,61 @@
+# Runs the monitor in the cloud so you don't need a computer left on.
+# Does nothing until you add at least one notification secret (see README).
+name: monitor
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      NTFY_SERVER: ${{ secrets.NTFY_SERVER }}
+      PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+      PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    steps:
+      - name: Check for notification secrets
+        id: gate
+        run: |
+          if [ -n "$NTFY_TOPIC$PUSHOVER_TOKEN$DISCORD_WEBHOOK_URL" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No notification secrets set, so skipping. See the README to set one up."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.enabled
+        with:
+          python-version: "3.12"
+
+      # The SQLite history has to survive between runs so each check can be
+      # compared with the previous one. Each run saves a new cache entry and
+      # restores the most recent one.
+      - uses: actions/cache/restore@v4
+        if: steps.gate.outputs.enabled
+        with:
+          path: monitor.db
+          key: monitor-db-${{ github.run_id }}
+          restore-keys: monitor-db-
+
+      - name: Check sites
+        if: steps.gate.outputs.enabled
+        # GitHub's scheduler already adds plenty of delay, so skip the jitter.
+        run: python monitor.py run --no-jitter
+
+      - uses: actions/cache/save@v4
+        if: always() && steps.gate.outputs.enabled && hashFiles('monitor.db') != ''
+        with:
+          path: monitor.db
+          key: monitor-db-${{ github.run_id }}

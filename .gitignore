@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+.env
+.env.*
+!.env.example
+*_key
+*_key.pub
+*.pem
+.venv/
+venv/
+
+# Local data
+monitor.db
+snapshots/
+logs/

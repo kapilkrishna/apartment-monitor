@@ -1,0 +1,35 @@
+# what to watch, and what's worth a buzz.
+#
+# notification keys don't go here. they're secrets, so they live in .env
+# (or github secrets). see the readme.
+#
+# not sure a building will work? python3 monitor.py try <url>
+
+# these apply to every building, unless a building sets its own.
+[defaults]
+# bedroom counts you want. 0 = studio. delete the line for any size.
+bedrooms = [2]
+# only these specific units, if you have your eye on some. delete for any.
+# apartments = ["1204", "1304"]
+# square footage. delete a line (or set 0) for no limit.
+# min_sqft = 750
+# max_sqft = 1200
+# the most you'd pay in base rent. delete the line for no limit.
+# max_rent = 6300
+# what to alert on: "new" (just listed), "gone" (leased or pulled),
+# "price" (base rent changed).
+alert_on = ["new", "gone", "price"]
+
+
+# one [[sites]] block per building. copy it to watch more.
+# replace this one with your building's floorplans page.
+[[sites]]
+name = "The Example"
+url = "https://example.com/floorplans/"
+# any setting from [defaults] works here too, e.g.:
+# max_rent = 5500
+
+# [[sites]]
+# name = "another building"
+# url = "https://example.com/floorplans/"
+# bedrooms = [1, 2]
